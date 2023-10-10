@@ -3,15 +3,16 @@ from classes import *
 John = Pop("John", 0, "Lumberjack")
 Smith = Pop("Smith", 0, "Farmer")
 Bob = Pop("Bob", 0, "Blacksmith")
+Jill = Pop("Jill", 200, "Blacksmith")
 
-popList = [John, Smith, Bob]
+popList = [John, Smith, Bob, Jill]
 market = []
-prices = [3, 5, 10]
-itemNames = ["Grain", "Wood", "Iron"]
+prices = [3, 5, 10, 30] # Needs updating if adding new good
+itemNames = ["Grain", "Wood", "Iron", "Computer"] # Needs updating if adding new good
 
 John.inventory = ["Wood", "Wood", "Wood", "Wood", "Wood", "Wood", "Wood", "Wood", "Wood"]
 Smith.inventory = ["Grain", "Grain", "Grain", "Grain", "Grain", "Grain", "Grain", "Grain", "Grain", "Grain"]
-Bob.inventory = ["Iron", "Iron", "Iron", "Iron", "Iron", "Iron", "Iron", "Iron", "Iron", "Iron"]
+Bob.inventory = ["Iron", "Iron", "Iron", "Iron", "Iron", "Iron", "Iron", "Iron", "Iron", "Iron", "Iron", "Computer", "Computer", "Computer"]
 
 # Attempts to sell an item
 # Returns true if they have the item and sold it
@@ -65,7 +66,7 @@ def consume(person):
         index = doesPersonHave(person, person.needs[i])
         if index != -1:
             person.inventory.pop(index)
-            person.needs.pop(index)
+            person.needs.pop(i)
         else:
             person.doesNotHave.append(person.needs[i])
             i += 1
