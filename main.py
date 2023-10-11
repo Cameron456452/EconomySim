@@ -3,16 +3,12 @@ from classes import *
 John = Pop("John", 0, "Lumberjack")
 Smith = Pop("Smith", 0, "Farmer")
 Bob = Pop("Bob", 0, "Blacksmith")
-Jill = Pop("Jill", 200, "Blacksmith")
+Jill = Pop("Jill", 200, "Engineer")
 
 popList = [John, Smith, Bob, Jill]
 market = []
 prices = [3, 5, 10, 30] # Needs updating if adding new good
 itemNames = ["Grain", "Wood", "Iron", "Computer"] # Needs updating if adding new good
-
-John.inventory = ["Wood", "Wood", "Wood", "Wood", "Wood", "Wood", "Wood", "Wood", "Wood"]
-Smith.inventory = ["Grain", "Grain", "Grain", "Grain", "Grain", "Grain", "Grain", "Grain", "Grain", "Grain"]
-Bob.inventory = ["Iron", "Iron", "Iron", "Iron", "Iron", "Iron", "Iron", "Iron", "Iron", "Iron", "Iron", "Computer", "Computer", "Computer"]
 
 # Attempts to sell an item
 # Returns true if they have the item and sold it
@@ -143,36 +139,66 @@ def updatePrices(supplyList, demandList):
     for i in range(len(supplyList)):
         if supplyList[i] == 0:
             prices[i] = 999
-
-        if demandList[i] == 0:
+        elif demandList[i] == 0:
             prices[i] = 0
-
         elif supplyList[i] > demandList[i]:
             prices[i] /= (supplyList[i]/demandList[i])
         else:
             prices[i] *= 1 + ((demandList[i] - supplyList[i])/supplyList[i])
 
-        prices[i] = round(prices[1], 2)
+        prices[i] = round(prices[i], 2)
 
-def main():
-    iDemands = [] # Individual Demands
+# Makes pops produce goods based on their job
+# Returns nothing
+def produce(person):
+    if person.job == "Farmer":
+        for i in range(10):
+            person.inventory.append("Grain")
+
+    if person.job == "Lumberjack":
+        for i in range(10):
+            person.inventory.append("Wood")
+
+    if person.job == "Blacksmith":
+        for i in range(5):
+            person.inventory.append("Iron")
+
+    if person.job == "Engineer":
+        for i in range(2):
+            person.inventory.append("Computer")
+
+# Gives facts about the market
+def marketUpdate():
+    for i in range(len(prices)):
+        print(f"{itemNames[i]}: ${prices[i]}")
+
+def marketLoop(popList):
+    for i in range(len(popList)):  # Produces goods
+        produce(popList[i])
+
+    iDemands = []  # Individual Demands
     for i in range(len(popList)):
-        consume(popList[i]) # Consumes what they have
-        iDemands.append(popList[i].doesNotHave) # Appends needs onto another list
+        consume(popList[i])  # Consumes what they have
+        iDemands.append(popList[i].doesNotHave)  # Appends needs onto another list
 
-    supplyList = calcSupply(market) # Generates supply list
-    demandList = calcDemand(iDemands) # Generates demand list
-    updatePrices(supplyList, demandList) # Updates prices based on supply and demand
+    supplyList = calcSupply(market)  # Generates supply list
+    demandList = calcDemand(iDemands)  # Generates demand list
+    updatePrices(supplyList, demandList)  # Updates prices based on supply and demand
 
     for i in range(len(popList)):
         j = 0
-        while (len(popList[i].inventory)) > 0: # Sells entire inventory
+        while (len(popList[i].inventory)) > 0:  # Sells entire inventory
             sell(popList[i], popList[i].inventory[j], findValue(popList[i].inventory[j]))
 
-    for i in range(len(popList)): # Buys goods needed
+    for i in range(len(popList)):  # Buys goods needed
         buyNeededGoods(popList[i])
 
-    for i in range(len(popList)): # Prints final balances
+    for i in range(len(popList)):  # Prints final balances
         print(f"{popList[i].name} Balance ${popList[i].balance}")
+
+    marketUpdate()
+
+def main():
+    marketLoop(popList)
 
 main()
