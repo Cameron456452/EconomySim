@@ -10,7 +10,7 @@ class Pop:
         self.debt = 0
 
     def __str__(self):
-        return f"{self.name}: {self.occupation}, Balance: ${self.balance}"
+        return f"{self.name}: {self.job}, Balance: ${self.balance}"
 
 class Good:
     def __init__(self, name, owner):

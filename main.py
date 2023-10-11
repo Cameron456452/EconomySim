@@ -23,6 +23,7 @@ for i in range(100):
     popList.append(Pop(i, 15, random.choice(jobList)))
 
 # Attempts to sell an item
+# Note: it doesn't add anything to the market, sendToMarket does that
 # Returns true if they have the item and sold it
 # Returns false if they do not have the item and didn't sell it
 def sell(seller, item, value):
