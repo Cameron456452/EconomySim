@@ -1,14 +1,24 @@
 from classes import *
+import random
+import time
+import statistics
 
-John = Pop("John", 0, "Lumberjack")
-Smith = Pop("Smith", 0, "Farmer")
-Bob = Pop("Bob", 0, "Blacksmith")
-Jill = Pop("Jill", 200, "Engineer")
+# John = Pop("John", 0, "Lumberjack")
+# Smith = Pop("Smith", 0, "Farmer")
+# Bob = Pop("Bob", 0, "Blacksmith")
+# Jill = Pop("Jill", 200, "Engineer")
 
-popList = [John, Smith, Bob, Jill]
+popList = []
 market = []
-prices = [3, 5, 10, 30] # Needs updating if adding new good
+basePrices = [3, 5, 10, 30]
+prices = basePrices # Needs updating if adding new good
 itemNames = ["Grain", "Wood", "Iron", "Computer"] # Needs updating if adding new good
+jobList = ["Farmer", "Lumberjack", "Blacksmith", "Engineer"]
+consumptionTax = 0
+govBalance = 0
+
+for i in range(100):
+    popList.append(Pop(i, 0, random.choice(jobList)))
 
 # Attempts to sell an item
 # Returns true if they have the item and sold it
@@ -18,8 +28,7 @@ def sell(seller, item, value):
     if index != -1:
         seller.inventory.pop(index)
         seller.balance += value
-        # print(f"{seller.name} sold {item}")
-        # market.append(item)
+        seller.income += value
         return True
     else:
         print("Does not have the item")
@@ -39,6 +48,8 @@ def sendToMarket(seller, item):
 # Returns true if successful
 # Returns false if unable to buy the item
 def buy(buyer, item, value):
+    global govBalance
+
     index = findMarketItem(item)
     if index == -1:
         # print(f"{item} not on the market")
@@ -46,12 +57,13 @@ def buy(buyer, item, value):
 
     if buyer.balance >= value:
         buyer.inventory.append(item)
-        buyer.balance -= value
+        buyer.balance -= value*(1+consumptionTax)
+        govBalance += value*consumptionTax
         market.pop(index)
         # print(f"{buyer.name} bought {item}")
         return True
     else:
-        print(f"{buyer.name} does not have the funds to buy {item}")
+        # print(f"{buyer.name} does not have the funds to buy {item}")
         return False
 
 # Person tries to consume everything they need
@@ -142,9 +154,9 @@ def updatePrices(supplyList, demandList):
         elif demandList[i] == 0:
             prices[i] = 0
         elif supplyList[i] > demandList[i]:
-            prices[i] /= (supplyList[i]/demandList[i])
+            prices[i] /= min(supplyList[i]/demandList[i], 4)
         else:
-            prices[i] *= 1 + ((demandList[i] - supplyList[i])/supplyList[i])
+            prices[i] *= 1 + min((demandList[i] - supplyList[i])/supplyList[i], 0.75)
 
         prices[i] = round(prices[i], 2)
 
@@ -164,14 +176,80 @@ def produce(person):
             person.inventory.append("Iron")
 
     if person.job == "Engineer":
-        for i in range(2):
+        for i in range(4):
             person.inventory.append("Computer")
 
 # Gives facts about the market
+# Returns nothing
 def marketUpdate():
     for i in range(len(prices)):
         print(f"{itemNames[i]}: ${prices[i]}")
+    print()
 
+# Generates facts about the population
+# Returns nothing
+def popStats(popList):
+    GDP = 0
+    moneySupply = 0
+    jobCount = [0, 0, 0, 0]
+    jobIncomes = [0, 0, 0, 0]
+
+    for pop in popList:
+        GDP += round(pop.income, 2)
+        moneySupply += round(pop.balance, 2)
+
+        if pop.job == "Farmer":
+            jobCount[0] += 1
+            jobIncomes[0] += pop.income
+
+        elif pop.job == "Lumberjack":
+            jobCount[1] += 1
+            jobIncomes[1] += pop.income
+
+        elif pop.job == "Blacksmith":
+            jobCount[2] += 1
+            jobIncomes[2] += pop.income
+
+        elif pop.job == "Engineer":
+            jobCount[3] += 1
+            jobIncomes[3] += pop.income
+
+    gdpCapita = round(GDP/len(popList), 2)
+    avBal = round(moneySupply / len(popList), 2)
+
+    print(f"GDP ${GDP}")
+    print(f"Money Supply ${moneySupply}")
+    print(f"GDP per capita ${gdpCapita}")
+    print(f"Average Balance ${avBal}")
+    print(f"Government Balance ${govBalance}")
+    print()
+
+    for i in range(len(jobCount)):
+        if jobCount[i] > 0:
+            print(f"{jobList[i]}: {jobCount[i]} jobs, Average Income: ${round(jobIncomes[i]/jobCount[i], 2)}")
+        else:
+            print(f"No one works as a {jobList[i]}")
+
+    print()
+    swapJobs(popList, gdpCapita, avBal, jobIncomes)
+
+# Gives a chance a pop will switch jobs based on how well they're doing financially
+# Returns nothing
+def swapJobs(popList, gdpCapita, avBal, jobIncomes):
+    jobWeights = []
+    for i in range(len(jobList)):
+        jobWeights.append(prices[i] / basePrices[i])
+
+    for i in range(len(popList)):
+        incomeHappy = popList[i].income / gdpCapita
+        balHappy = popList[i].income / avBal
+        happiness = (incomeHappy + balHappy) / 2
+
+        if happiness < random.random()*5 and random.random() < 0.4:
+            popList[i].job = random.choices(jobList, weights=jobWeights, k=1)
+
+# Does one iteration of a market cycle
+# Returns nothing
 def marketLoop(popList):
     for i in range(len(popList)):  # Produces goods
         produce(popList[i])
@@ -193,12 +271,18 @@ def marketLoop(popList):
     for i in range(len(popList)):  # Buys goods needed
         buyNeededGoods(popList[i])
 
-    for i in range(len(popList)):  # Prints final balances
-        print(f"{popList[i].name} Balance ${popList[i].balance}")
-
     marketUpdate()
+    popStats(popList)
+    resetNeeds(popList)
+
+# Gives pops back their needs
+def resetNeeds(popList):
+    for i in range(len(popList)):
+        popList[i].needs = ["Wood", "Wood", "Grain", "Grain", "Grain", "Iron", "Computer"]
+    market.clear()
 
 def main():
-    marketLoop(popList)
+    for i in range(5):
+        marketLoop(popList)
 
 main()
