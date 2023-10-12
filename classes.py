@@ -8,6 +8,7 @@ class Pop:
         self.job = job
         self.income = 0
         self.debt = 0
+        self.status = 0
 
     def __str__(self):
         return f"{self.name}: {self.job}, Balance: ${self.balance}"

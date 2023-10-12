@@ -27,7 +27,7 @@ for i in range(100):
 # Returns true if they have the item and sold it
 # Returns false if they do not have the item and didn't sell it
 def sell(seller, item, value):
-    index = doesPersonHave(seller, item)
+    index = findInList(seller.inventory, item)
     if index != -1:
         seller.inventory.pop(index)
         seller.balance += value
@@ -41,7 +41,7 @@ def sell(seller, item, value):
 # As a note, this does not remove it from their inventory, sell does that. This just calculates demand
 # And gets the market with the goods it has
 def sendToMarket(seller, item):
-    index = doesPersonHave(seller, item)
+    index = findInList(seller.inventory, item)
     if index != -1:
         market.append(item)
         return True
@@ -55,7 +55,7 @@ def sendToMarket(seller, item):
 def buy(buyer, item, value, force=False):
     global govBalance
 
-    index = findMarketItem(item)
+    index = findInList(market, item)
     if index == -1:
         # print(f"{item} not on the market")
         return False
@@ -75,14 +75,14 @@ def buy(buyer, item, value, force=False):
 # If they can't, then they add it to doesNotHave and tries to buy it later
 def consume(person):
     i = 0
-    while i < len(person.needs):
-        index = doesPersonHave(person, person.needs[i])
+    while person.needs:
+        index = findInList(person.inventory, person.needs[i])
         if index != -1:
             person.inventory.pop(index)
             person.needs.pop(i)
         else:
             person.doesNotHave.append(person.needs[i])
-            i += 1
+            person.needs.pop(i)
 
     for j in range(len(person.inventory)):
         sendToMarket(person, person.inventory[j])
@@ -97,12 +97,12 @@ def buyNeededGoods(person):
         else:
             i += 1
 
-# Sees if person has an item
-# Returns the index in their inventory if they do
-# Returns -1 if they do not have it
-def doesPersonHave(person, item):
-    for i in range(len(person.inventory)):
-        if person.inventory[i] == item:
+# Tries to find a value in a list
+# Returns the index it was found at
+# Returns -1 if it was not found
+def findInList(list, value):
+    for i in range(len(list)):
+        if list[i] == value:
             return i
 
     return -1
@@ -116,30 +116,14 @@ def findValue(good):
 
     return -1
 
-# Finds the item in the market
-# Returns the index of where the item was found on the market
-def findMarketItem(good):
-    for i in range(len(market)):
-        if market[i] == good:
-            return i
-
-    return -1
-
 # Generates the supply of each item on the market
 # Returns a list in the order of itemNames
 def calcSupply(market):
     supplyList = [0] * len(itemNames)
     for i in range(len(market)):
-        supplyList[findItemList(market[i])] += 1
+        supplyList[findInList(itemNames, market[i])] += 1
 
     return supplyList
-
-# Finds what index an item is on the list of items to be sold (itemNames)
-# Returns the index found at. (-1 if it isn't there)
-def findItemList(item):
-    for i in range(len(itemNames)):
-        if item == itemNames[i]:
-            return i
 
 # Generates the demand of each item on the market
 # Loops over a 2D list (each list being a pops needs aka demand) to figure out the demand
@@ -148,7 +132,7 @@ def calcDemand(iDemands):
     demandList = [0] * len(itemNames)
     for i in range(len(iDemands)):
         for j in range(len(iDemands[i])):
-            demandList[findItemList(iDemands[i][j])] += 1
+            demandList[findInList(itemNames, iDemands[i][j])] += 1
 
     return demandList
 
@@ -178,11 +162,11 @@ def produce(person):
             person.inventory.append(Good("Wood", person))
 
     if person.job == "Blacksmith":
-        for i in range(5):
+        for i in range(2):
             person.inventory.append(Good("Iron", person))
 
     if person.job == "Engineer":
-        for i in range(5):
+        for i in range(2):
             person.inventory.append(Good("Computer", person))
 
 # Gives facts about the market
@@ -256,8 +240,11 @@ def swapJobs(popList, gdpCapita, avBal, jobIncomes):
         balHappy = popList[i].income / avBal
         happiness = (incomeHappy + balHappy) / 2
 
+        if popList[i].doesNotHave:
+            happiness -= 2
+
         if happiness < random.random()*5 and random.random() < 0.4:
-            popList[i].job = random.choices(jobList, weights=jobWeights, k=1)
+            popList[i].job = random.choices(jobList, weights=jobWeights, k=1)[0]
 
 # Does one iteration of a market cycle
 # Returns nothing
@@ -293,18 +280,10 @@ def buyBackMarketGoods(popList):
 
     while market: # Tests if it isn't empty
         owner = market[0].owner
-        index = findPerson(popList, owner)
+        index = findInList(popList, owner)
         popList[index].inventory.append(market[0])
         if not buy(popList[index], market[0], findValue(market[0]), force=True):
             print("Failure")
-
-# Finds a person in popList
-def findPerson(popList, name):
-    for i in range(len(popList)):
-        if popList[i] == name:
-            return i
-
-    return -1
 
 # Gives pops back their needs
 def resetNeeds(popList):
