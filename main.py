@@ -1,4 +1,4 @@
-from classes import *
+from politics import *
 import random
 import math
 
@@ -12,7 +12,7 @@ consumptionTax = 0.05
 govBalance = 0
 interestRate = 0.12
 
-for p in range(100):
+for p in range(1000):
     popList.append(Pop(p, 15, random.choice(jobList)))
 
 # Attempts to sell an item
@@ -91,8 +91,6 @@ def consume(person):
 
     for j in range(len(person.inventory)):
         sendToMarket(person, person.inventory[j])
-    random.shuffle(market)  # Randomly shuffles items so no one item has priority
-
 
 # Attempts to buy needed goods, if they can't it skips to the next thing they need
 def buyNeededGoods(person):
@@ -180,19 +178,19 @@ def updatePrices(supplyList, demandList):
 # Returns nothing
 def produce(person):
     if person.job == "Farmer":
-        for i in range(5):
+        for i in range(8):
             person.inventory.append(Good("Grain", person))
 
     if person.job == "Lumberjack":
-        for i in range(5):
+        for i in range(8):
             person.inventory.append(Good("Wood", person))
 
     if person.job == "Blacksmith":
-        for i in range(3):
+        for i in range(5):
             person.inventory.append(Good("Iron", person))
 
     if person.job == "Engineer":
-        for i in range(2):
+        for i in range(3):
             person.inventory.append(Good("Computer", person))
 
 # Gives facts about the market
@@ -291,6 +289,7 @@ def marketLoop(popList):
         while (len(popList[i].inventory)) > 0:  # Sells entire inventory
             sell(popList[i], popList[i].inventory[j], findValue(popList[i].inventory[j]))
 
+    random.shuffle(market)  # Randomly shuffles items so no one item has priority
     for i in range(len(popList)):  # Buys goods needed
         buyNeededGoods(popList[i])
 
@@ -333,10 +332,12 @@ def resetNeeds(popList):
             popList[i].debt -= min(math.floor(popList[i].balance), popList[i].debt)
             popList[i].balance -= min(math.floor(popList[i].balance), popList[i].debt)
 
+    market.clear()
 
 def main():
     for i in range(5):
         marketLoop(popList)
+    politicalVote(popList)
 
 
 main()
