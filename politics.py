@@ -365,6 +365,7 @@ def politicalVote(popList, statusQuo):
     voterDecision(popList)
     allocate_seats(partyList, totalSeats)
 
+    print("Mean ideology:", meanPopIdeology(popList))
     for parties in partyList:
         print(f"{parties.name}: {parties.seats}")
 

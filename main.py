@@ -13,7 +13,7 @@ govBalance = 0
 interestRate = 0.12
 
 for p in range(1000):
-    popList.append(Pop(p, 15, random.choice(jobList)))
+    popList.append(Pop(p, 100, random.choice(jobList)))
 
 # Attempts to sell an item
 # Note: it doesn't add anything to the market, sendToMarket does that
@@ -178,19 +178,19 @@ def updatePrices(supplyList, demandList):
 # Returns nothing
 def produce(person):
     if person.job == "Farmer":
-        for i in range(4):
+        for i in range(10):
             person.inventory.append(Good("Grain", person))
 
     if person.job == "Lumberjack":
-        for i in range(4):
+        for i in range(10):
             person.inventory.append(Good("Wood", person))
 
     if person.job == "Blacksmith":
-        for i in range(2):
+        for i in range(5):
             person.inventory.append(Good("Iron", person))
 
     if person.job == "Engineer":
-        for i in range(1):
+        for i in range(5):
             person.inventory.append(Good("Computer", person))
 
 # Gives facts about the market
@@ -252,23 +252,21 @@ def popStats(popList, govPlan, oppositionPlan):
 
 # Changes pop ideology due to how happy they are
 def popIdeologyChange(popList, govPlan, oppositionPlan):
-    diffX = 0
-    diffY = 0
     for pop in popList:
+        diffX = govPlan.x - pop.x
+        diffY = govPlan.y - pop.y
+        magnitude = math.sqrt(diffX ** 2 + diffY ** 2)
+
         if pop.happiness > 0:
-            diffX = govPlan.x - pop.x
-            diffY = govPlan.y = pop.y
-
-            pop.x -= (pop.happiness * (diffX/(diffX+diffY)))
-            pop.y -= (pop.happiness * (diffY/(diffX+diffY)))
-
+            pop.x += (pop.happiness * (diffX / magnitude))
+            pop.y += (pop.happiness * (diffY / magnitude))
         elif pop.happiness < 0:
-            anger = pop.happiness * -1
+            anger = -pop.happiness  # Corrected calculation of anger
             diffX = oppositionPlan.x - pop.x
-            diffY = oppositionPlan.y = pop.y
-
-            pop.x -= (anger * (diffX / (diffX + diffY)))
-            pop.y -= (anger * (diffY / (diffX + diffY)))
+            diffY = oppositionPlan.y - pop.y
+            magnitude = math.sqrt(diffX ** 2 + diffY ** 2)
+            pop.x += (anger * (diffX / magnitude))
+            pop.y += (anger * (diffY / magnitude))
 
 # Gives a chance a pop will switch jobs based on how well they're doing financially
 # Returns nothing
