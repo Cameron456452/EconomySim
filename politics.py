@@ -35,10 +35,10 @@ def calcPolsDistance(idealA, idealB, manualDistance=0):
     distance = math.sqrt((idealA.x - idealB.x) ** 2 + (idealA.y - idealB.y) ** 2)
 
     if (idealA.x >= 0 and idealB.x <= 0) or (idealA.x <= 0 and idealB.x >= 0):
-        distance += 1
+        distance += 2
 
     if (idealA.y >= 0 and idealB.y <= 0) or (idealA.y <= 0 and idealB.y >= 0):
-        distance += 1
+        distance += 2
 
     distance += manualDistance
 
@@ -344,6 +344,20 @@ def reset(politicianList, coalitionList, majorityList, minorityList, partyList):
     for party in partyList:
         party.seats = 0
 
+# Calculates mean pop ideology
+# Returns an issue object with the result
+def meanPopIdeology(popList):
+    meanX = 0
+    meanY = 0
+    happy = 0
+    for pop in popList:
+        meanX += pop.x
+        meanY += pop.y
+        happy += pop.happiness
+
+    print(happy/len(popList))
+    return Issue(meanX/len(popList), meanY/len(popList))
+
 # Runs a political cycle
 # Returns nothing
 def politicalVote(popList, statusQuo):
@@ -377,14 +391,15 @@ def politicalVote(popList, statusQuo):
             print(poltician)
 
     passes = holdVote(politicianList, govPlan, Issue(0, 0), coalitionList)
-    while not passes and abs(govPlan.x - statusQuo.x) > 0.1:
-        govPlan.x = round(govPlan.x*0.75 + statusQuo.x*0.25, 1)
-        govPlan.y = round(govPlan.y*0.75 + statusQuo.y*0.25, 1)
+    while not passes and abs(govPlan.x - statusQuo.x) > 0.3:
+        govPlan.x = max(round(govPlan.x*0.75 + statusQuo.x*0.25, 1), 0.1)
+        govPlan.y = max(round(govPlan.y*0.75 + statusQuo.y*0.25, 1), 0.1)
         passes = holdVote(politicianList, govPlan, statusQuo, coalitionList)
 
     if passes:
         statusQuo = govPlan
 
     reset(politicianList, coalitionList, majorityList, minorityList, partyList)
+    print()
 
     return statusQuo, govPlan, oppositionPlan

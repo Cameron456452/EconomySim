@@ -178,19 +178,19 @@ def updatePrices(supplyList, demandList):
 # Returns nothing
 def produce(person):
     if person.job == "Farmer":
-        for i in range(8):
+        for i in range(4):
             person.inventory.append(Good("Grain", person))
 
     if person.job == "Lumberjack":
-        for i in range(8):
+        for i in range(4):
             person.inventory.append(Good("Wood", person))
 
     if person.job == "Blacksmith":
-        for i in range(5):
+        for i in range(2):
             person.inventory.append(Good("Iron", person))
 
     if person.job == "Engineer":
-        for i in range(3):
+        for i in range(1):
             person.inventory.append(Good("Computer", person))
 
 # Gives facts about the market
@@ -203,7 +203,7 @@ def marketUpdate(supplyList, demandList):
 
 # Generates facts about the population
 # Returns nothing
-def popStats(popList):
+def popStats(popList, govPlan, oppositionPlan):
     GDP = 0
     moneySupply = 0
     totalDebt = 0
@@ -248,7 +248,27 @@ def popStats(popList):
 
     print()
     swapJobs(popList, gdpCapita, avBal)
+    popIdeologyChange(popList, govPlan, oppositionPlan)
 
+# Changes pop ideology due to how happy they are
+def popIdeologyChange(popList, govPlan, oppositionPlan):
+    diffX = 0
+    diffY = 0
+    for pop in popList:
+        if pop.happiness > 0:
+            diffX = govPlan.x - pop.x
+            diffY = govPlan.y = pop.y
+
+            pop.x -= (pop.happiness * (diffX/(diffX+diffY)))
+            pop.y -= (pop.happiness * (diffY/(diffX+diffY)))
+
+        elif pop.happiness < 0:
+            anger = pop.happiness * -1
+            diffX = oppositionPlan.x - pop.x
+            diffY = oppositionPlan.y = pop.y
+
+            pop.x -= (anger * (diffX / (diffX + diffY)))
+            pop.y -= (anger * (diffY / (diffX + diffY)))
 
 # Gives a chance a pop will switch jobs based on how well they're doing financially
 # Returns nothing
@@ -260,18 +280,18 @@ def swapJobs(popList, gdpCapita, avBal):
     for i in range(len(popList)):
         incomeHappy = popList[i].income / gdpCapita
         balHappy = popList[i].income / avBal
-        happiness = (incomeHappy + balHappy) / 2
+        popList[i].happiness = (incomeHappy + balHappy) / 2
 
         if popList[i].doesNotHave:
-            happiness -= 2
+            popList[i].happiness -= 2
 
-        if happiness < random.random() * 5 and random.random() < 0.4:
+        if popList[i].happiness < random.random() * 5 and random.random() < 0.4:
             popList[i].job = random.choices(jobList, weights=jobWeights, k=1)[0]
 
 
 # Does one iteration of a market cycle
 # Returns nothing
-def marketLoop(popList):
+def marketLoop(popList, govPlan, oppositionPlan):
     for i in range(len(popList)):  # Produces goods
         produce(popList[i])
 
@@ -295,7 +315,7 @@ def marketLoop(popList):
 
     buyBackMarketGoods(popList)  # Forces them to take back any goods not sold
     marketUpdate(supplyList, demandList)  # Prints prices of goods in the economy
-    popStats(popList)  # Prints stats about the economy
+    popStats(popList, govPlan, oppositionPlan)  # Prints stats about the economy
     resetNeeds(popList)  # Resets everyones needs
 
 
@@ -338,7 +358,7 @@ def main():
     statusQuo = Issue(0, 0)
     statusQuo, govPlan, oppositionPlan = politicalVote(popList, statusQuo)
     for i in range(5):
-        marketLoop(popList)
+        marketLoop(popList, govPlan, oppositionPlan)
         if i % 2 == 0 and i > 0:
             statusQuo, govPlan, oppositionPlan = politicalVote(popList, statusQuo)
 

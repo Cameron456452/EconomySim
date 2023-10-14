@@ -11,8 +11,9 @@ class Pop:
         self.income = 0
         self.debt = 0
         self.status = 0
+        self.happiness = 0
 
-        baseIdeology = random.gauss(random.choice([-4, 4]), 2)+(random.random()*6-3)
+        baseIdeology = random.gauss(random.choice([-4, 4]), 2)
         self.x = random.gauss(baseIdeology, 4)
         self.y = random.gauss(baseIdeology, 4)
         self.vote = None
@@ -62,3 +63,6 @@ class Issue:
         self.x = x
         self.y = y
         self.name = name
+
+    def __str__(self):
+        return f"{self.x} {self.y}"
