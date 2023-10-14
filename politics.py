@@ -9,7 +9,7 @@ Fascist = Party("Fascist Party", 10, 10)
 Liberal = Party("Liberal Party", 0, -1.5)
 SDP = Party("SDP", -3, -3)
 Socialist = Party("Socialists", -7, -4)
-Communist = Party("Communist", -10, -10)
+Communist = Party("Communist", -10, 0)
 
 partyList = [Fascist, MAGA, Libertarian, Conservative, Liberal, SDP, Socialist, Communist]
 politicianList = []
@@ -117,12 +117,24 @@ def getCandidates(politicianList, candidates):
     candidateList = []
     for i in range(candidates):
         option = random.choice(politicianList)
-        while option.job != "MP":
+        attempts = 0
+        while option.job != "MP" or (sameParty(candidateList, option) and attempts < 100):
             option = random.choice(politicianList)
+            attempts += 1
 
         candidateList.append(random.choice(politicianList))
 
     return candidateList
+
+# Tests if a in a list of politicians, a politicians passed in party is not equal to any of them
+# Returns True if there is someone in the same party
+# False is not
+def sameParty(candidateList, politician):
+    for candidate in candidateList:
+        if politician.party == candidate.party:
+            return True
+
+    return False
 
 # Runs elections for various offices
 def elections(candidateList, electorateList, title, round=1, replace=False):
@@ -221,6 +233,7 @@ def holdVote(politicianList, newIssue, statusQuo, coalitionList):
     veto = False
 
     print(f"\nVote on {newIssue.name} {newIssue.x}, {newIssue.y}")
+    print(f"Current status on {newIssue.name} {statusQuo.x}, {statusQuo.y}")
 
     for politician in politicianList:
         inFavor = round(calcPolsDistance(politician, newIssue), 1)
@@ -300,6 +313,18 @@ def cabinetAllocation(coalitionList, majorityList):
 
     return Issue(round(x), round(y))
 
+# Calculates opposition platform based on the individual members
+# It's individual members due to a lack of parties being in opposition, more members (also just laziness)
+def oppositionPlatform(minorityList):
+    totalSeats = len(minorityList)
+    x = 0
+    y = 0
+    for members in minorityList:
+        x += members.x * (1/totalSeats)
+        y += members.y * (1 / totalSeats)
+
+    return Issue(round(x), round(y))
+
 # Finds a person with a job
 # Returns the person
 def findPerson(politicianList, job):
@@ -309,16 +334,27 @@ def findPerson(politicianList, job):
 
     print(f"Couldn't find {job}")
 
+# Resets the lists for another round
+def reset(politicianList, coalitionList, majorityList, minorityList, partyList):
+    politicianList.clear()
+    coalitionList.clear()
+    majorityList.clear()
+    minorityList.clear()
+
+    for party in partyList:
+        party.seats = 0
+
 # Runs a political cycle
 # Returns nothing
-def politicalVote(popList):
+def politicalVote(popList, statusQuo):
+    totalSeats = 149
     voterDecision(popList)
-    allocate_seats(partyList, 149)
+    allocate_seats(partyList, totalSeats)
 
     for parties in partyList:
         print(f"{parties.name}: {parties.seats}")
 
-    coalitionList = coalitionBuilding(partyList, 149)
+    coalitionList = coalitionBuilding(partyList, totalSeats)
     politicianList = createPoliticians(partyList)
     majorityList = createSideList(coalitionList, politicianList, True)
     minorityList = createSideList(coalitionList, politicianList, False)
@@ -332,15 +368,23 @@ def politicalVote(popList):
     majLeader = findPerson(politicianList, "Majority Leader")
     minLeader = findPerson(politicianList, "Minority Leader")
 
-    theIssue = cabinetAllocation(coalitionList, majorityList)
+    govPlan = cabinetAllocation(coalitionList, majorityList)
+    oppositionPlan = oppositionPlatform(minorityList)
 
     print()
     for poltician in politicianList:
         if poltician.job != "MP":
             print(poltician)
 
-    passes = holdVote(politicianList, theIssue, Issue(0, 0), coalitionList)
-    while not passes and (theIssue.x > 0.4 and theIssue.y > 0.4):
-        theIssue.x = round(theIssue.x*0.75, 1)
-        theIssue.y = round(theIssue.y*0.75, 1)
-        passes = holdVote(politicianList, theIssue, Issue(3, 3), coalitionList)
+    passes = holdVote(politicianList, govPlan, Issue(0, 0), coalitionList)
+    while not passes and abs(govPlan.x - statusQuo.x) > 0.1:
+        govPlan.x = round(govPlan.x*0.75 + statusQuo.x*0.25, 1)
+        govPlan.y = round(govPlan.y*0.75 + statusQuo.y*0.25, 1)
+        passes = holdVote(politicianList, govPlan, statusQuo, coalitionList)
+
+    if passes:
+        statusQuo = govPlan
+
+    reset(politicianList, coalitionList, majorityList, minorityList, partyList)
+
+    return statusQuo, govPlan, oppositionPlan

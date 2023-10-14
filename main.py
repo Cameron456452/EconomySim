@@ -335,9 +335,12 @@ def resetNeeds(popList):
     market.clear()
 
 def main():
+    statusQuo = Issue(0, 0)
+    statusQuo, govPlan, oppositionPlan = politicalVote(popList, statusQuo)
     for i in range(5):
         marketLoop(popList)
-    politicalVote(popList)
+        if i % 2 == 0 and i > 0:
+            statusQuo, govPlan, oppositionPlan = politicalVote(popList, statusQuo)
 
 
 main()

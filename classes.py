@@ -12,7 +12,7 @@ class Pop:
         self.debt = 0
         self.status = 0
 
-        baseIdeology = random.gauss(random.choice([-4, 4]), 2)
+        baseIdeology = random.gauss(random.choice([-4, 4]), 2)+(random.random()*6-3)
         self.x = random.gauss(baseIdeology, 4)
         self.y = random.gauss(baseIdeology, 4)
         self.vote = None
