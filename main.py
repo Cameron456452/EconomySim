@@ -268,6 +268,15 @@ def popIdeologyChange(popList, govPlan, oppositionPlan):
             pop.x += (anger * (diffX / magnitude))
             pop.y += (anger * (diffY / magnitude))
 
+            if random.random() < 0.2: # Extremism
+                pop.x = random.gauss(7.5, 2.5)
+                pop.y = random.gauss(7.5, 2.5)
+
+                if random.random() < 0.5:
+                    pop.x *= -1
+                if random.random() < 0.5:
+                    pop.y *= -1
+
         pop.x = random.gauss(pop.x, 1)
         pop.y = random.gauss(pop.y, 1)
 

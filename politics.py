@@ -6,7 +6,7 @@ Libertarian = Party("Libertarian", 6, -6)
 Conservative = Party("Conservative Party", 3, 3)
 MAGA = Party("One Nation", 5, 7)
 Fascist = Party("Fascist Party", 10, 10)
-Liberal = Party("Liberal Party", 0, -1.5)
+Liberal = Party("Liberal Party", 0, 0)
 SDP = Party("SDP", -3, -3)
 Socialist = Party("Socialists", -7, -4)
 Communist = Party("Communist", -10, 0)
@@ -233,7 +233,7 @@ def holdVote(politicianList, newIssue, statusQuo, coalitionList):
     veto = False
 
     print(f"\nVote on {newIssue.name} {newIssue.x}, {newIssue.y}")
-    print(f"Current status on {newIssue.name} {statusQuo.x}, {statusQuo.y}")
+    print(f"Current status on {newIssue.name} {statusQuo}")
 
     for politician in politicianList:
         inFavor = round(calcPolsDistance(politician, newIssue), 1)
@@ -263,6 +263,7 @@ def holdVote(politicianList, newIssue, statusQuo, coalitionList):
     print("Ayes", len(ayeList))
     print("Nays", len(nayList))
     print("Present", len(presentList))
+    whipCount(ayeList, nayList)
 
     if veto:
         if len(ayeList) > len(nayList) * 2:
@@ -278,6 +279,11 @@ def holdVote(politicianList, newIssue, statusQuo, coalitionList):
         else:
             print("Bill fails")
             return False
+
+# Prints everyone in favor or against the bill
+def whipCount(ayeList, nayList):
+    print(', '.join([member.name for member in ayeList]))
+    print(', '.join([member.name for member in nayList]))
 
 # Creates a cabinet as well as a political compass spot for an issue that want to pass
 def cabinetAllocation(coalitionList, majorityList):
@@ -391,7 +397,7 @@ def politicalVote(popList, statusQuo):
         if poltician.job != "MP":
             print(poltician)
 
-    passes = holdVote(politicianList, govPlan, Issue(0, 0), coalitionList)
+    passes = holdVote(politicianList, govPlan, statusQuo, coalitionList)
     while not passes and abs(govPlan.x - statusQuo.x) > 0.3:
         govPlan.x = round(govPlan.x*0.75 + statusQuo.x*0.25, 1)
         govPlan.y = round(govPlan.y*0.75 + statusQuo.y*0.25, 1)
