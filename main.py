@@ -10,7 +10,7 @@ itemNames = ["Grain", "Wood", "Iron", "Computer"]  # Needs updating if adding ne
 jobList = ["Farmer", "Lumberjack", "Blacksmith", "Engineer"]
 consumptionTax = 0.05
 govBalance = 0
-interestRate = 0.12
+interestRate = 0
 
 for p in range(1000):
     popList.append(Pop(p, 100, random.choice(jobList)))
@@ -178,11 +178,11 @@ def updatePrices(supplyList, demandList):
 # Returns nothing
 def produce(person):
     if person.job == "Farmer":
-        for i in range(10):
+        for i in range(8):
             person.inventory.append(Good("Grain", person))
 
     if person.job == "Lumberjack":
-        for i in range(10):
+        for i in range(8):
             person.inventory.append(Good("Wood", person))
 
     if person.job == "Blacksmith":
@@ -190,7 +190,7 @@ def produce(person):
             person.inventory.append(Good("Iron", person))
 
     if person.job == "Engineer":
-        for i in range(5):
+        for i in range(3):
             person.inventory.append(Good("Computer", person))
 
 # Gives facts about the market
@@ -268,6 +268,9 @@ def popIdeologyChange(popList, govPlan, oppositionPlan):
             pop.x += (anger * (diffX / magnitude))
             pop.y += (anger * (diffY / magnitude))
 
+        pop.x = random.gauss(pop.x, 1)
+        pop.y = random.gauss(pop.y, 1)
+
 # Gives a chance a pop will switch jobs based on how well they're doing financially
 # Returns nothing
 def swapJobs(popList, gdpCapita, avBal):
@@ -324,7 +327,7 @@ def buyBackMarketGoods(popList):
     while market:  # Tests if it isn't empty
         owner = market[0].owner
         index = findInList(popList, owner)
-        popList[index].inventory.append(market[0])
+        # popList[index].inventory.append(market[0]) # Breaks the economy eventually with infinite debt
         if not buy(popList[index], market[0], findValue(market[0]), force=True):
             print("Failure")
 
@@ -355,7 +358,7 @@ def resetNeeds(popList):
 def main():
     statusQuo = Issue(0, 0)
     statusQuo, govPlan, oppositionPlan = politicalVote(popList, statusQuo)
-    for i in range(5):
+    for i in range(10):
         marketLoop(popList, govPlan, oppositionPlan)
         if i % 2 == 0 and i > 0:
             statusQuo, govPlan, oppositionPlan = politicalVote(popList, statusQuo)

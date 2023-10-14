@@ -393,8 +393,8 @@ def politicalVote(popList, statusQuo):
 
     passes = holdVote(politicianList, govPlan, Issue(0, 0), coalitionList)
     while not passes and abs(govPlan.x - statusQuo.x) > 0.3:
-        govPlan.x = max(round(govPlan.x*0.75 + statusQuo.x*0.25, 1), 0.1)
-        govPlan.y = max(round(govPlan.y*0.75 + statusQuo.y*0.25, 1), 0.1)
+        govPlan.x = round(govPlan.x*0.75 + statusQuo.x*0.25, 1)
+        govPlan.y = round(govPlan.y*0.75 + statusQuo.y*0.25, 1)
         passes = holdVote(politicianList, govPlan, statusQuo, coalitionList)
 
     if passes:
