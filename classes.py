@@ -21,6 +21,20 @@ class Pop:
     def __str__(self):
         return f"{self.name}: {self.job}, Balance: ${self.balance}"
 
+# Uses govEconomy.py
+class EconPop:
+    def __init__(self, income=0):
+        self.income = income
+        self.paidTaxes = 0
+        self.netWorth = 0
+        self.consumption = 0
+        self.happiness = 0
+        self.oldIncomes = []
+
+        baseIdeology = random.gauss(random.choice([-4, 4]), 2)
+        self.x = random.gauss(baseIdeology, 4)
+        self.y = random.gauss(baseIdeology, 4)
+
 class Good:
     def __init__(self, name, owner):
         self.name = name

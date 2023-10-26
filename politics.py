@@ -9,9 +9,12 @@ Fascist = Party("Fascist Party", 10, 10)
 Liberal = Party("Liberal Party", 0, 0)
 SDP = Party("SDP", -3, -3)
 Socialist = Party("Socialists", -7, -4)
-Communist = Party("Communist", -10, 0)
+Communist = Party("Communist", -10, -1)
 
-partyList = [Fascist, MAGA, Libertarian, Conservative, Liberal, SDP, Socialist, Communist]
+# partyList = [Fascist, MAGA, Libertarian, Conservative, Liberal, SDP, Socialist, Communist]
+partyList = [Party("Progressive Alliance", -6, 5), Party("Green Harmony", -3, -2),
+             Party("Freedom First", 2, 2), Party("Liberty Coaliton", 6, -4)]
+# partyList = [Party("Democrats", -4, -4), Party("Republicans", 4, 4)]
 politicianList = []
 
 # Voters decide who they are gonna vote for in the election
@@ -38,7 +41,7 @@ def calcPolsDistance(idealA, idealB, manualDistance=0):
         distance += 2
 
     if (idealA.y >= 0 and idealB.y <= 0) or (idealA.y <= 0 and idealB.y >= 0):
-        distance += 2
+        distance += 1
 
     distance += manualDistance
 
@@ -75,30 +78,49 @@ def findTopTwoParties(partyList):
             sortedList[0] = sortedList[1]
             sortedList[1] = temp
 
-    return sortedList[0]
+    return sortedList[0], sortedList[1]
 
 # Creates a coalition with the largest party always in charge
 # Returns list of parties in coalition
 def coalitionBuilding(partyList, totalSeats):
-    bigParty = findTopTwoParties(partyList)
+    partyA, partyB = findTopTwoParties(partyList)
     coalitionSeats = 0
 
-    distList = []
-    coalitionList = []
+    aList = []
+    bList = []
+    aSeats = 0
+    bSeats = 0
+
     for party in partyList:
-        distList.append(calcPolsDistance(party, bigParty))
+        aDist = calcPolsDistance(partyA, party)
+        bDist = calcPolsDistance(partyB, party)
 
-    while coalitionSeats <= 0.5*totalSeats:
-        partnerIndex = calcMinIndex(distList)
-        distList[partnerIndex] = 300
+        if aDist > bDist:
+           aList.append(party)
+           aSeats += party.seats
+        else:
+            bList.append(party)
+            bSeats += party.seats
 
-        coalitionList.append(partyList[partnerIndex])
-        coalitionSeats += partyList[partnerIndex].seats
+        if aSeats > totalSeats*0.5 or bSeats > totalSeats*0.5:
+            break
 
-    print()
-    for partner in coalitionList:
-        print(partner)
-    print(f"Total seats: {coalitionSeats}")
+    if aSeats > totalSeats*0.5:
+        coalitionList = aList
+        coalitionSeats = aSeats
+    elif bSeats > totalSeats*0.5:
+        coalitionList = bList
+        coalitionSeats = bSeats
+    else:
+        print("Hung parliament")
+        coalitionList = []
+
+    coalitionList = sorted(coalitionList, key=lambda member: member.seats, reverse=True)
+
+    print("\nCoalition members")
+    for member in coalitionList:
+        print(member.name)
+    print("Total seats", coalitionSeats)
 
     return coalitionList
 
@@ -118,7 +140,7 @@ def getCandidates(politicianList, candidates):
     for i in range(candidates):
         option = random.choice(politicianList)
         attempts = 0
-        while option.job != "MP" or (sameParty(candidateList, option) and attempts < 100):
+        while option.job != "MP" or (not sameParty(candidateList, option) and attempts < 100):
             option = random.choice(politicianList)
             attempts += 1
 
@@ -166,7 +188,7 @@ def elections(candidateList, electorateList, title, round=1, replace=False):
 
     else:
         candidateList = [sorted_candidates[0], sorted_candidates[1]]
-        if len(sorted_candidates) > 2 and sorted_candidates[1].votes == sorted_candidates[2].votes: # Includes 3rd place if 2nd and 3rd place tie
+        if len(sorted_candidates) > 2 and sorted_candidates[1].votes == sorted_candidates[2].votes and round < 3: # Includes 3rd place if 2nd and 3rd place tie
             candidateList.append(sorted_candidates[2])
             sorted_candidates[2].votes = 0
 
@@ -226,7 +248,7 @@ def inMajority(politician, coalitionList):
 
     return False
 
-def holdVote(politicianList, newIssue, statusQuo, coalitionList):
+def holdVote(politicianList, newIssue, statusQuo, coalitionList, majorityList, minorityList, canVeto=True):
     ayeList = []
     nayList = []
     presentList = []
@@ -240,9 +262,9 @@ def holdVote(politicianList, newIssue, statusQuo, coalitionList):
         against = round(calcPolsDistance(politician, statusQuo), 1)
 
         if inMajority(politician, coalitionList):
-            inFavor /= 1.5
+            inFavor -= 2 # Less means more likely to support
         else:
-            inFavor *= 1.25
+            inFavor += 1
 
         if politician.job != "President":
             if inFavor < against:
@@ -252,7 +274,7 @@ def holdVote(politicianList, newIssue, statusQuo, coalitionList):
             else:
                 presentList.append(politician)
 
-        elif politician.job == "President":
+        elif politician.job == "President" and canVeto:
             if inFavor <= against:
                 print(f"President {politician.name} supports it")
                 veto = False
@@ -260,10 +282,17 @@ def holdVote(politicianList, newIssue, statusQuo, coalitionList):
                 print(f"President {politician.name} vetoed it")
                 veto = True
 
-    print("Ayes", len(ayeList))
-    print("Nays", len(nayList))
-    print("Present", len(presentList))
-    whipCount(ayeList, nayList)
+        if not canVeto:
+            veto = False
+
+    if len(ayeList) > len(nayList):
+        print("Ayes", len(ayeList))
+        print("Nays", len(nayList))
+        print("Present", len(presentList))
+        whipCount(ayeList, nayList)
+
+    if (len(ayeList) == len(majorityList)) and (len(nayList) == len(minorityList)):
+        print("Party line vote in favor")
 
     if veto:
         if len(ayeList) > len(nayList) * 2:
@@ -306,9 +335,11 @@ def cabinetAllocation(coalitionList, majorityList):
 
     while cabinetSpots:
         cabinetPerson = random.choice(majorityList)
-        index = random.randint(0, len(cabinetSpots)-1)
-        cabinetPerson.job = cabinetSpots[index]
-        cabinetSpots.pop(index)
+        while cabinetPerson.job != "MP":
+            cabinetPerson = random.choice(majorityList)
+
+        cabinetPerson.job = cabinetSpots[0]
+        cabinetSpots.pop(0)
 
     totalSeats = len(majorityList)
     x = 0
@@ -364,6 +395,61 @@ def meanPopIdeology(popList):
     print(happy/len(popList))
     return Issue(meanX/len(popList), meanY/len(popList))
 
+def ideologyReaction(statusQuo, govPlan, passes, popList):
+    forBill = 0
+    againstBill = 0
+
+    for pop in popList:
+        if calcPolsDistance(statusQuo, pop) > calcPolsDistance(govPlan, pop):
+            supports = True
+        else:
+            supports = False
+
+        percentShift = calcPolsDistance(statusQuo, pop)*0.006
+
+        if govPlan.x < 0: # Left wing
+            if supports:
+                pop.x -= percentShift*10
+            else:
+                pop.x += percentShift * 10
+
+        else:
+            if supports:
+                pop.x += percentShift*10
+            else:
+                pop.x -= percentShift * 20
+
+        if govPlan.y < 0: # Libertarian
+            if supports:
+                pop.y -= percentShift*10
+            else:
+                pop.y += percentShift * 20
+        else:
+            if supports:
+                pop.y += percentShift*10
+            else:
+                pop.y -= percentShift * 20
+
+        if not supports:
+            if random.random() < percentShift: # Flips sides
+                pop.x = random.gauss(pop.x*-1, 3)
+                pop.y = random.gauss(pop.y*-1, 3)
+
+        if supports:
+            forBill += 1
+        else:
+            againstBill += 1
+
+        pop.x += round(random.random() - 0.5, 1)
+        pop.y += round(random.random() - 0.5, 1)
+
+    print(f"Supports {int(forBill/(forBill+againstBill)*100)}%")
+    print(f"Against {int(againstBill/(forBill+againstBill)*100)}%")
+
+    for party in partyList: # Randomly moves parties ideologically
+        party.x += round(random.random()-0.5, 1)
+        party.y += round(random.random()-0.5, 1)
+
 # Runs a political cycle
 # Returns nothing
 def politicalVote(popList, statusQuo):
@@ -397,11 +483,17 @@ def politicalVote(popList, statusQuo):
         if poltician.job != "MP":
             print(poltician)
 
-    passes = holdVote(politicianList, govPlan, statusQuo, coalitionList)
+    print("Confidence vote")
+    holdVote(politicianList, Issue(govPlan.x, govPlan.y), Issue(minLeader.x, minLeader.y), coalitionList, majorityList, minorityList, False)
+
+    print()
+    passes = holdVote(politicianList, govPlan, statusQuo, coalitionList, majorityList, minorityList)
     while not passes and abs(govPlan.x - statusQuo.x) > 0.3:
         govPlan.x = round(govPlan.x*0.75 + statusQuo.x*0.25, 1)
         govPlan.y = round(govPlan.y*0.75 + statusQuo.y*0.25, 1)
-        passes = holdVote(politicianList, govPlan, statusQuo, coalitionList)
+        passes = holdVote(politicianList, govPlan, statusQuo, coalitionList, majorityList, minorityList)
+
+    ideologyReaction(statusQuo, govPlan, passes, popList)
 
     if passes:
         statusQuo = govPlan

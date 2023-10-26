@@ -107,6 +107,11 @@ def buyNeededGoods(person):
         buyNeededGoods(person)
 
     while person.doesNotHave and person.status > 0:
+        if person.status == 1:
+            person.doesNotHave = 0
+            person.status = 0
+            break
+
         removeGoods = ["Grain", "Grain", "Wood", "Wood", "Iron", "Iron", "Iron", "Computer", "Computer"]
         person.status -= 1
         for goods in removeGoods:
