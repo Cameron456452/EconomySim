@@ -145,7 +145,41 @@ def betterOff(popList):
         pop.oldIncomes.append(pop.income)
 
         if len(pop.oldIncomes) != 1:
-            pop.happiness = (pop.oldIncomes[len(pop.oldIncomes-1)] - pop.oldIncomes[len(pop.oldIncomes-2)]) / pop.oldIncomes[len(pop.oldIncomes-2)]
+            pop.happiness = ((pop.oldIncomes[len(pop.oldIncomes)-1] - pop.oldIncomes[len(pop.oldIncomes)-2]) / pop.oldIncomes[len(pop.oldIncomes)-2]) * 10
+
+# Changes pop ideology due to how happy they are
+def popIdeologyChange(popList, govPlan, oppositionPlan):
+    for pop in popList:
+        diffX = govPlan.x - pop.x
+        diffY = govPlan.y - pop.y
+        magnitude = math.sqrt(diffX ** 2 + diffY ** 2)
+
+        if pop.happiness > 0:
+            pop.x += (pop.happiness * (diffX / magnitude))*0.1
+            pop.y += (pop.happiness * (diffY / magnitude))*0.1
+        elif pop.happiness < 0:
+            anger = -pop.happiness  # Corrected calculation of anger
+            diffX = oppositionPlan.x - pop.x
+            diffY = oppositionPlan.y - pop.y
+            magnitude = math.sqrt(diffX ** 2 + diffY ** 2)
+            pop.x += (anger * (diffX / magnitude))*0.1
+            pop.y += (anger * (diffY / magnitude))*0.1
+
+            if random.random() < 0.1: # Extremism
+                pop.x = random.gauss(7.5, 2.5)
+                pop.y = random.gauss(7.5, 2.5)
+
+                if random.random() < 0.5:
+                    pop.x *= -1
+                if random.random() < 0.5:
+                    pop.y *= -1
+
+        pop.x = random.gauss(pop.x, 1)
+        pop.y = random.gauss(pop.y, 1)
+
+def updateEconPops(incomeList, popList):
+    for i in range(len(popList)):
+        popList[i].income = incomeList[i]
 
 def main():
     population = 331900000
@@ -160,19 +194,23 @@ def main():
     incomeList = createIncomeList(55000, 0.5, sample)
     popList = createEconPops(incomeList)
 
+    randomPop = random.randint(1, len(popList))-1
+
     for i in range(10):
         if i % 2 == 0:
             statusQuo, govPlan, oppositionPlan = politicalVote(popList, statusQuo)
 
-        incomeList = createIncomeList(55000, -0.0195*statusQuo.x + 0.56333, sample)
-        popList = createEconPops(incomeList) # Different every year so betterOff is broken
+        print("GINI", max(0.0195*statusQuo.x + 0.56333, 0.3))
+        incomeList = createIncomeList(55000, round(max(-0.0195*statusQuo.x + 0.56333, 0.3), 2), sample)
         moneySpent = distributeTaxes(popList, statusQuo)
 
         incomeTax = payIncomeTaxes(popList, statusQuo)
         consumeTax = consumption(popList)
         totalTaxes = incomeTax + consumeTax
 
+        updateEconPops(incomeList, popList)
         betterOff(popList) # Broken due to popList resetting every year
+        popIdeologyChange(popList, govPlan, oppositionPlan)
 
         print(f"Income ${totalTaxes*factor:,.2f}")
         print(f"Expenses ${moneySpent*factor:,.2f}")

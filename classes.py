@@ -13,7 +13,7 @@ class Pop:
         self.status = 0
         self.happiness = 0
 
-        baseIdeology = random.gauss(random.choice([-4, 4]), 2)
+        baseIdeology = random.gauss(random.choice([-4, -4, 0, 4, 4]), 2)
         self.x = random.gauss(baseIdeology, 4)
         self.y = random.gauss(baseIdeology, 4)
         self.vote = None
@@ -30,8 +30,9 @@ class EconPop:
         self.consumption = 0
         self.happiness = 0
         self.oldIncomes = []
+        self.vote = [] # Used in RCV
 
-        baseIdeology = random.gauss(random.choice([-4, 4]), 2)
+        baseIdeology = random.gauss(random.choice([-5, 5]), 2)
         self.x = random.gauss(baseIdeology, 4)
         self.y = random.gauss(baseIdeology, 4)
 
@@ -44,12 +45,13 @@ class Good:
         return self.name == other
 
 class Party:
-    def __init__(self, name, x, y):
+    def __init__(self, name, x, y, pariah=False):
         self.name = name
         self.x = x
         self.y = y
         self.votes = 0
         self.seats = 0
+        self.pariah = pariah
 
     def __eq__(self, other):
         return self.name == other.name
@@ -61,10 +63,11 @@ class Politician:
     def __init__(self, party, name="Joe"):
         self.name = name
         self.party = party
-        self.x = random.gauss(party.x, 0.8)
-        self.y = random.gauss(party.y, 0.8)
+        self.x = random.gauss(party.x, 1)
+        self.y = random.gauss(party.y, 1)
         self.votes = 0
         self.job = "MP"
+        self.committees = []
 
     def __str__(self):
         return f"{self.name}: {self.job} ({round(self.x, 1)}, {round(self.y, 1)})"

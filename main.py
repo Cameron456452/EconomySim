@@ -253,37 +253,6 @@ def popStats(popList, govPlan, oppositionPlan):
 
     print()
     swapJobs(popList, gdpCapita, avBal)
-    popIdeologyChange(popList, govPlan, oppositionPlan)
-
-# Changes pop ideology due to how happy they are
-def popIdeologyChange(popList, govPlan, oppositionPlan):
-    for pop in popList:
-        diffX = govPlan.x - pop.x
-        diffY = govPlan.y - pop.y
-        magnitude = math.sqrt(diffX ** 2 + diffY ** 2)
-
-        if pop.happiness > 0:
-            pop.x += (pop.happiness * (diffX / magnitude))
-            pop.y += (pop.happiness * (diffY / magnitude))
-        elif pop.happiness < 0:
-            anger = -pop.happiness  # Corrected calculation of anger
-            diffX = oppositionPlan.x - pop.x
-            diffY = oppositionPlan.y - pop.y
-            magnitude = math.sqrt(diffX ** 2 + diffY ** 2)
-            pop.x += (anger * (diffX / magnitude))
-            pop.y += (anger * (diffY / magnitude))
-
-            if random.random() < 0.2: # Extremism
-                pop.x = random.gauss(7.5, 2.5)
-                pop.y = random.gauss(7.5, 2.5)
-
-                if random.random() < 0.5:
-                    pop.x *= -1
-                if random.random() < 0.5:
-                    pop.y *= -1
-
-        pop.x = random.gauss(pop.x, 1)
-        pop.y = random.gauss(pop.y, 1)
 
 # Gives a chance a pop will switch jobs based on how well they're doing financially
 # Returns nothing
